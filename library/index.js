@@ -191,9 +191,12 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
 
     // a map of all entries we want to hit based on browser and OS
     // can be anything, path, registery..
+    // https://chromium.googlesource.com/chromium/src/+/HEAD/docs/enterprise/policies.md
+    // https://community.brave.com/t/policy-files-seem-to-have-no-effect-brave-on-linux/191068/6
+    // https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/alternate-distribution-options
     const entriesMap = {
         'chromium': {
-            'linux': [],
+            'linux': ['/etc/chromium/policies/managed'],
             'windows': [],
             'macos': []
         },
@@ -203,12 +206,14 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
             'macos': []
         },
         'edge': {
+            // not supported in linux (yet?)
+            // https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#extensionsettings
             'linux': [],
             'windows': [],
             'macos': []
         },
         'brave': {
-            'linux': [],
+            'linux': ['/etc/brave/policies/managed'],
             'windows': [],
             'macos': []
         },
@@ -221,10 +226,11 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
     if(operatingSystem == 'linux') {
         // https://support.google.com/chrome/a/answer/7517525?hl=en&ref_topic=7517516
         // https://docs.keeper.io/enterprise-guide/deploying-keeper-to-end-users/keeper-fill/linux/json-policy-deployment-chrome
-        const content = {
+        
+        let filename = `ExtensionSettings.json`
+        let content = {
             "ExtensionSettings": {
                 [extensionId]: {
-                    "blocked_install_message": "Custom error message.",
                     "installation_mode": "force_installed",
                     "override_update_url": true,
                     "update_url": hostUrl + extensionId + '.xml'
@@ -240,10 +246,10 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
             }
             
             // make sure there's no conflicts
-            await execPromise(`sudo rm -r ${managedPath}/*`)
+            try { await execPromise(`sudo rm -r ${managedPath}/*`) } catch {}
 
             // write the extension policy settings to the path
-            const filePath = ph.join(managedPath, `ExtensionSettings.json`)
+            const filePath = ph.join(managedPath, filename)
             await writePromise(filePath, JSON.stringify(content, undefined, 2))
             entries.push(filePath)
         }
