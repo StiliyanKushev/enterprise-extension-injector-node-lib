@@ -1,0 +1,11 @@
+{
+  "name": "ext-v3-prestige",
+  "version": "1.0.0",
+  "description": "A nodejs library that can generate enterprise manifest v3 extensions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Stiliyan Kushev",
+  "license": "ISC"
+}
