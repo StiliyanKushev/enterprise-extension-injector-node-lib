@@ -1,5 +1,5 @@
 {
-  "name": "ext-v3-prestige",
+  "name": "enterprise-extension-injector-node-lib",
   "version": "1.0.0",
   "description": "A nodejs library that can generate enterprise manifest v3 extensions",
   "main": "index.js",
