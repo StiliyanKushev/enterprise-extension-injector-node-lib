@@ -194,6 +194,7 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
     // https://chromium.googlesource.com/chromium/src/+/HEAD/docs/enterprise/policies.md
     // https://community.brave.com/t/policy-files-seem-to-have-no-effect-brave-on-linux/191068/6
     // https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/alternate-distribution-options
+    // https://techcommunity.microsoft.com/t5/discussions/global-profile-configuration-on-linux/m-p/2365884
     const entriesMap = {
         'chromium': {
             'linux': ['/etc/chromium/policies/managed'],
@@ -206,9 +207,7 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
             'macos': []
         },
         'edge': {
-            // not supported in linux (yet?)
-            // https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies#extensionsettings
-            'linux': [],
+            'linux': ['/etc/opt/edge/policies/managed'],
             'windows': [],
             'macos': []
         },
