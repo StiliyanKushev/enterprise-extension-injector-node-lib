@@ -8,6 +8,7 @@ A nodejs library that:
 End-Goal:
 - We'll be able to have a manifest v3 extension that can also use manifest v2 webRequest (blocking) functionality
 - The force installed extension will also be impossible to remove by the user (making it more production ready)
+- The extension will be injected in EVERY browser, even if it's ran from a flash drive, doesn't matter it's location.
 - Gives us better control overall, and more permissions. Usually, chrome/brave/edge treats such extensions nicely.
 
 TODO:

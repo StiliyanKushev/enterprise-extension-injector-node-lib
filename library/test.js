@@ -3,7 +3,8 @@ const { InjectEnterpriseExtension, RemoveEnterpriseExtensions } = require('./ind
 // ---- TEST LIBRARY ---- //
 ;(async () => {
     const DummyExtensionPath = require('path').join(__dirname, '../dummy-extension')
-    const GoogleChromePath = 'google-chrome-stable'
+    // linux: const GoogleChromePath = 'google-chrome-stable'
+    const GoogleChromePath = `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"`
     const TargetBrowsers = ['chromium', 'chrome', 'edge', 'brave']
 
     console.log('INJECTING ENTERPRISE EXTENSION')

@@ -192,25 +192,26 @@ function HostExtension(address, port) {
 // https://community.brave.com/t/policy-files-seem-to-have-no-effect-brave-on-linux/191068/6
 // https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/alternate-distribution-options
 // https://techcommunity.microsoft.com/t5/discussions/global-profile-configuration-on-linux/m-p/2365884
+// https://www.chromium.org/administrators/configuring-policy-for-extensions/
 const entriesMap = {
     'chromium': {
         'linux': ['/etc/chromium/policies/managed'],
-        'windows': [],
+        'windows': ['HKEY_LOCAL_MACHINE\\Software\\Policies\\Chromium'],
         'macos': []
     },
     'chrome': {
         'linux': ['/etc/opt/chrome/policies/managed'],
-        'windows': [],
+        'windows': ['HKEY_LOCAL_MACHINE\\Software\\Policies\\Google\\Chrome'],
         'macos': []
     },
     'edge': {
         'linux': ['/etc/opt/edge/policies/managed'],
-        'windows': [],
+        'windows': ['HKEY_LOCAL_MACHINE\\Software\\Policies\\Microsoft\\Edge'],
         'macos': []
     },
     'brave': {
         'linux': ['/etc/brave/policies/managed'],
-        'windows': [],
+        'windows': ['HKEY_LOCAL_MACHINE\\Software\\Policies\\BraveSoftware\\Brave'],
         'macos': []
     },
 }
@@ -258,7 +259,19 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
         }
     }
     else if(operatingSystem == 'windows') {
-        // todo
+        let content = {
+            [extensionId]: {
+                "installation_mode": "force_installed",
+                "override_update_url": true,
+                "update_url": hostUrl + extensionId + '.xml'
+            }
+        }
+
+        for(let managedPath of currentEntries) {
+            await execPromise(`reg add ${managedPath} /v "ExtensionSettings" /d "${JSON.stringify(content).replaceAll('"', '\\"')}" /f`)
+            entries.push(managedPath)
+        }
+
     }
     else if(operatingSystem == 'mac') {
         // todo
@@ -311,7 +324,11 @@ async function RemoveEnterpriseExtensions(targetBrowsers = []) {
         }
     }
     else if(operatingSystem == 'windows') {
-        // todo
+        for(let managedPath of currentEntries) {
+            // delete the policies
+            console.log(`Removing enterprise extensions at: ${managedPath}`)
+            try { await execPromise(`reg delete ${managedPath} /f`) } catch {}
+        }
     }
     else if(operatingSystem == 'mac') {
         // todo
