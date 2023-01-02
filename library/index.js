@@ -186,41 +186,45 @@ function HostExtension(address, port) {
     return `http://${address}:${port}/`
 }
 
-async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
-    let entries = []
+// a map of all entries we want to hit based on browser and OS
+// can be anything, path, registery..
+// https://chromium.googlesource.com/chromium/src/+/HEAD/docs/enterprise/policies.md
+// https://community.brave.com/t/policy-files-seem-to-have-no-effect-brave-on-linux/191068/6
+// https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/alternate-distribution-options
+// https://techcommunity.microsoft.com/t5/discussions/global-profile-configuration-on-linux/m-p/2365884
+const entriesMap = {
+    'chromium': {
+        'linux': ['/etc/chromium/policies/managed'],
+        'windows': [],
+        'macos': []
+    },
+    'chrome': {
+        'linux': ['/etc/opt/chrome/policies/managed'],
+        'windows': [],
+        'macos': []
+    },
+    'edge': {
+        'linux': ['/etc/opt/edge/policies/managed'],
+        'windows': [],
+        'macos': []
+    },
+    'brave': {
+        'linux': ['/etc/brave/policies/managed'],
+        'windows': [],
+        'macos': []
+    },
+}
 
-    // a map of all entries we want to hit based on browser and OS
-    // can be anything, path, registery..
-    // https://chromium.googlesource.com/chromium/src/+/HEAD/docs/enterprise/policies.md
-    // https://community.brave.com/t/policy-files-seem-to-have-no-effect-brave-on-linux/191068/6
-    // https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/alternate-distribution-options
-    // https://techcommunity.microsoft.com/t5/discussions/global-profile-configuration-on-linux/m-p/2365884
-    const entriesMap = {
-        'chromium': {
-            'linux': ['/etc/chromium/policies/managed'],
-            'windows': [],
-            'macos': []
-        },
-        'chrome': {
-            'linux': ['/etc/opt/chrome/policies/managed'],
-            'windows': [],
-            'macos': []
-        },
-        'edge': {
-            'linux': ['/etc/opt/edge/policies/managed'],
-            'windows': [],
-            'macos': []
-        },
-        'brave': {
-            'linux': ['/etc/brave/policies/managed'],
-            'windows': [],
-            'macos': []
-        },
-    }
-
+function GetEntriesFromTargetBrowsers(targetBrowsers) {
     // compute all entries we should target
     const currentEntries = []
     targetBrowsers.map(browserName => currentEntries.push(...entriesMap[browserName][operatingSystem]))
+    return currentEntries
+}
+
+async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
+    let entries = []
+    const currentEntries = GetEntriesFromTargetBrowsers(targetBrowsers)
 
     if(operatingSystem == 'linux') {
         // https://support.google.com/chrome/a/answer/7517525?hl=en&ref_topic=7517516
@@ -268,6 +272,7 @@ async function ForceInstallExtension(extensionId, hostUrl, targetBrowsers) {
  * @param {String} extensionPath Path to unpacked extension code
  * @param {String} pathChromiumBasedBrowser Path to a chromium based browser, used for packing
  * @param {String[]} targetBrowsers List of browsers we want to inject for. (chromium, chrome, edge, brave)
+ * @returns {String} the ID of the extension
  */
 async function InjectEnterpriseExtension(extensionPath, pathChromiumBasedBrowser, targetBrowsers = []) {
     console.log(`Creating an enterprise extension for: "${extensionPath}" [${operatingSystem}]`)
@@ -290,19 +295,30 @@ async function InjectEnterpriseExtension(extensionPath, pathChromiumBasedBrowser
 
     // print a divider for better debugging
     console.log('-'.repeat(process.stdout.columns))
+
+    // we might want to keep that, so we'll return it to the user
+    return extensionId
 }
 
-function RemoveEnterpriseExtensions(targetBrowsers = []) {
-    // todo
+async function RemoveEnterpriseExtensions(targetBrowsers = []) {
+    const currentEntries = GetEntriesFromTargetBrowsers(targetBrowsers)
+
+    if(operatingSystem == 'linux') {
+        for(let managedPath of currentEntries) {
+            // delete the policies
+            console.log(`Removing enterprise extensions at: ${managedPath}`)
+            try { await execPromise(`sudo rm -r ${managedPath}/*`) } catch {}
+        }
+    }
+    else if(operatingSystem == 'windows') {
+        // todo
+    }
+    else if(operatingSystem == 'mac') {
+        // todo
+    }
 }
 
 module.exports = {
     InjectEnterpriseExtension,
     RemoveEnterpriseExtensions,
 }
-
-// ---- TEST LIBRARY ---- //
-const DummyExtensionPath = require('path').join(__dirname, '../dummy-extension')
-const GoogleChromePath = 'google-chrome-stable'
-const TargetBrowsers = ['chromium', 'chrome', 'edge', 'brave']
-InjectEnterpriseExtension(DummyExtensionPath, GoogleChromePath, TargetBrowsers)
